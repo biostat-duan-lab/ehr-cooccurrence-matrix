@@ -1,4 +1,4 @@
-# Compute Co-occurrence matrix from EHR data
+# Compute co-occurrence matrix from EHR data
 
 Author: Parker Knight (pknight@g.harvard.edu)
 
