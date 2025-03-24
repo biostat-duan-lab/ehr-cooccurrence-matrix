@@ -1,6 +1,3 @@
-<<<<<<< HEAD
-# ehr-cooccurrence-matrix
-=======
 # Compute Co-occurrence matrix from EHR data
 
 Author: Parker Knight (pknight@g.harvard.edu)
@@ -17,4 +14,3 @@ The file `example.csv` contains a dataframe formatted correctly. The following b
 df <- read.csv("example.csv")
 getCooccur(df, window = 2)
 ```
->>>>>>> c91e6c6 (initial commit)
