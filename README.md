@@ -14,3 +14,6 @@ The file `example.csv` contains a dataframe formatted correctly. The following b
 df <- read.csv("example.csv")
 getCooccur(df, window = 2)
 ```
+
+The slides from our tutorial presentation are found in the
+`kg-tutorial-slides.pdf` file.
