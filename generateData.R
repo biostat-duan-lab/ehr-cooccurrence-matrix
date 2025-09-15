@@ -28,16 +28,20 @@ write.csv(x = df, file = "example_byPatient.csv",row.names = FALSE)
 
 times <- unique(df$Time)
 codes <- unique(df$Code)
-df.final <- data.frame(Code = c("1"),
+patients <- unique(df$PatientID)
+df.final <- data.frame(PatientID = c("asdf"), 
+                       Code = c("1"),
                        Time = c(0),
                        nOccurrences = c(0))
+for (i in patients){
 for (t in times) {
   for (code in codes) {
-    df.cur <- df[(df$Code == code) & (df$Time == t),]
+    df.cur <- df[(df$Code == code) & (df$Time == t) & (df$PatientID == i),]
     if (nrow(df.cur) > 0)
-      df.final <- rbind(df.final, data.frame(Code = code, Time = t, 
+      df.final <- rbind(df.final, data.frame(PatientID = i, Code = code, Time = t, 
                                              nOccurrences = nrow(df.cur)))
   }
+}
 }
 df.final <- df.final[-1,]
 
