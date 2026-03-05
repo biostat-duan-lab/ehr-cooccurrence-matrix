@@ -24,28 +24,35 @@ df <- df[-1,]
 df <- filter(df, Time < T)
 df$Time <- round(df$Time)
 
-write.csv(x = df, file = "example_byPatient.csv",row.names = FALSE)
+# write.csv(x = df, file = "example_byPatient.csv",row.names = FALSE)
 
 times <- unique(df$Time)
 codes <- unique(df$Code)
 patients <- unique(df$PatientID)
+patient.ages <- rpois(n = length(patients), lambda = 35)
 df.final <- data.frame(PatientID = c("asdf"), 
                        Code = c("1"),
                        Time = c(0),
-                       nOccurrences = c(0))
+                       nOccurrences = c(0),
+                       Age = 0)
 for (i in patients){
-for (t in times) {
-  for (code in codes) {
-    df.cur <- df[(df$Code == code) & (df$Time == t) & (df$PatientID == i),]
-    if (nrow(df.cur) > 0)
-      df.final <- rbind(df.final, data.frame(PatientID = i, Code = code, Time = t, 
-                                             nOccurrences = nrow(df.cur)))
+  pat.idx <- which(patients == i)
+  for (t in times) {
+    for (code in codes) {
+      df.cur <- df[(df$Code == code) & (df$Time == t) & (df$PatientID == i),]
+      if (nrow(df.cur) > 0)
+        df.final <- rbind(df.final, data.frame(PatientID = i, Code = code, Time = t, 
+                                             nOccurrences = nrow(df.cur),
+                                             Age = patient.ages[pat.idx]))
   }
 }
 }
 df.final <- df.final[-1,]
 
-write.csv(x = df.final, file = "example.csv", row.names = FALSE)
+df.final$Insurance <- 1
+df.final[1:1000,]$Insurance <- 0
 
-source("cooccurrence.R")
-getCooccur(df.final)
+write.csv(x = df.final, file = "example.csv", row.names = FALSE)
+# 
+# source("cooccurrence.R")
+# getCooccur(df.final)

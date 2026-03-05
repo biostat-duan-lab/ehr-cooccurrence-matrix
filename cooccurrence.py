@@ -1,45 +1,63 @@
 import pandas as pd
 import numpy as np
     
+import pandas as pd
+import numpy as np
+
 def get_cooccur(df):
     """
-    Calculates the co-occurrence matrix of codes using an efficient vectorized approach.
-
+    Calculates co-occurrence matrices per Age group and Insurance group (vectorized).
     Args:
-        df (pd.DataFrame): A DataFrame with columns 'PatientID', 'Code', 'Time', and 'nOccurrences'.
-
+        df (pd.DataFrame): A DataFrame with columns 'PatientID', 'Code', 'Time',
+                           'nOccurrences', 'Insurance', and 'Age'.
     Returns:
-        pd.DataFrame: A co-occurrence matrix with codes as row and column names.
+        tuple: tensor, a 4D numpy array of shape (n_codes, n_codes, n_insurances, n_age_groups)
     """
-    # Create pairs of co-occurring codes for each unique Time and PatientID
-    # by merging the DataFrame with itself.
-    merged_df = pd.merge(df, df, on=['Time', 'PatientID'], suffixes=('_1', '_2'))
-    
-    # Filter out self-comparisons where Code1 is the same as Code2
-    cooccur_pairs = merged_df.copy()
-    
-    # Calculate the minimum number of occurrences for each pair
-    cooccur_pairs['min_occurrences'] = cooccur_pairs[['nOccurrences_1', 'nOccurrences_2']].min(axis=1)
-    
-    # Aggregate the minimum occurrences for each pair using pivot_table
-    cooccur_matrix_df = pd.pivot_table(
-        cooccur_pairs,
-        values='min_occurrences',
-        index='Code_1',
-        columns='Code_2',
-        aggfunc='sum',
-        fill_value=0
+    age_labels = ['Age < 20', '20 <= Age <= 40', '41 <= Age <= 60', 'Age > 60']
+    df = df.copy()
+    df['AgeGroup'] = pd.cut(
+        df['Age'],
+        bins=[-np.inf, 19, 40, 60, np.inf],
+        labels=age_labels
     )
-    # print(cooccur_matrix_df)
-    # Calculate the diagonal values (total occurrences for each code)
-    total_occurrences = df.groupby('Code')['nOccurrences'].sum()
-    
-    # Create the final co-occurrence matrix with the diagonal values added
-    # cooccur_matrix = cooccur_matrix_df.to_numpy()
-    # np.fill_diagonal(cooccur_matrix, total_occurrences.loc[cooccur_matrix_df.index].to_numpy())
-    
-    return cooccur_matrix_df
-    
+
+    all_codes = sorted(df['Code'].unique())
+    code_to_idx = {code: i for i, code in enumerate(all_codes)}
+    insurances = sorted(df['Insurance'].unique())
+    ins_to_idx = {ins: i for i, ins in enumerate(insurances)}
+    age_to_idx = {label: i for i, label in enumerate(age_labels)}
+
+    n_codes = len(all_codes)
+    n_insurances = len(insurances)
+    n_age_groups = len(age_labels)
+
+    # Single self-join on Time, PatientID, Insurance, and AgeGroup
+    merged = pd.merge(
+        df, df,
+        on=['Time', 'PatientID', 'Insurance', 'AgeGroup'],
+        suffixes=('_1', '_2')
+    )
+    merged['min_occurrences'] = merged[['nOccurrences_1', 'nOccurrences_2']].min(axis=1)
+
+    # Aggregate all groups at once
+    agg = (
+        merged.groupby(['Code_1', 'Code_2', 'Insurance', 'AgeGroup'], observed=True)['min_occurrences']
+        .sum()
+        .reset_index()
+    )
+
+    # Map categorical columns to integer indices
+    row_idx = agg['Code_1'].map(code_to_idx).values
+    col_idx = agg['Code_2'].map(code_to_idx).values
+    ins_idx = agg['Insurance'].map(ins_to_idx).values
+    age_idx = agg['AgeGroup'].map(age_to_idx).values
+    values = agg['min_occurrences'].values
+
+    # Scatter into the 4D tensor in one vectorized operation
+    tensor = np.zeros((n_codes, n_codes, n_insurances, n_age_groups), dtype=np.float64)
+    np.add.at(tensor, (row_idx, col_idx, ins_idx, age_idx), values)
+
+    return tensor
     
     
     

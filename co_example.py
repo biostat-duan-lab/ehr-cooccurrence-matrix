@@ -7,4 +7,4 @@ df = pd.read_csv("example.csv")
 print(df.info())
 
 cc = co.get_cooccur(df)
-print(cc)
+print(cc[:,:,1,3])
